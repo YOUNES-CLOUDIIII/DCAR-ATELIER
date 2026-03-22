@@ -202,7 +202,6 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
   .progress-track{display:none;}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -354,10 +353,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
 </div>
 
 <script>
-emailjs.init('dGfNAdajIXJ9dqyvU');
-
-const EMAILJS_SERVICE  = 'service_8sd98se';
-const EMAILJS_TEMPLATE = 'template_2ywoqqo';
+const WEB3FORMS_KEY = '8098be52-d6ff-495e-8ba3-76c8f03804c6';
 
 const STATUSES = [
   { label:'Attente de pièce',    emoji:'⏳', desc:'Les pièces nécessaires sont en commande.',            cls:'s0', dot:'dot0', short:'Att. pièce' },
@@ -662,27 +658,32 @@ async function openMail() {
   btn.innerHTML = 'Envoi en cours...';
   btn.disabled = true;
   try {
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
-      to_email:    v.email,
-      subject:     EMAIL_SUBJECTS[v.status](v),
-      prenom:      v.client.split(' ')[0],
-      plaque:      v.plate,
-      modele:      v.model,
-      statut:      STATUSES[v.status].label,
-      etape:       String(v.status + 1),
-      message:     EMAIL_BODIES[v.status],
-      lien_portail: PORTAL_URL,
+    const response = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        to: v.email,
+        subject: EMAIL_SUBJECTS[v.status](v),
+        message: `Bonjour ${v.client.split(' ')[0]},\n\n${EMAIL_BODIES[v.status]}\n\n---\nVehicule : ${v.model}\nPlaque : ${v.plate}\nStatut : ${STATUSES[v.status].label} (Etape ${v.status+1}/7)\n---\n\nSuivez l'avancement :\n${PORTAL_URL}\n(plaque : ${v.plate})\n\nCordialement,\nDCAR ATELIER`,
+        from_name: 'DCAR ATELIER',
+      })
     });
-    btn.innerHTML = '✅ Email envoyé !';
-    btn.style.background = '#10b981';
-    setTimeout(() => {
-      btn.innerHTML = orig;
-      btn.style.background = '';
-      btn.disabled = false;
-      closeModal('notifModal');
-    }, 2000);
+    const data = await response.json();
+    if(data.success) {
+      btn.innerHTML = '✅ Email envoyé !';
+      btn.style.background = '#10b981';
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.style.background = '';
+        btn.disabled = false;
+        closeModal('notifModal');
+      }, 2000);
+    } else {
+      throw new Error(data.message);
+    }
   } catch(err) {
-    console.error('EmailJS error:', err);
+    console.error('Web3Forms error:', err);
     btn.innerHTML = '❌ Erreur envoi';
     btn.style.background = '#ef4444';
     setTimeout(() => {
