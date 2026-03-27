@@ -353,7 +353,6 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
 </div>
 
 <script>
-const BREVO_API_KEY = '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';
 
 const STATUSES = [
   { label:'Attente de pièce',    emoji:'⏳', desc:'Les pièces nécessaires sont en commande.',            cls:'s0', dot:'dot0', short:'Att. pièce' },
@@ -659,23 +658,19 @@ async function openMail() {
   btn.disabled = true;
   try {
     const prenom = v.client.split(' ')[0];
-    const emailBody = `Bonjour ${prenom},\n\n${EMAIL_BODIES[v.status]}\n\nVehicule : ${v.model}\nPlaque   : ${v.plate}\nStatut   : ${STATUSES[v.status].label} (Etape ${v.status+1}/7)\n\nSuivez l'avancement :\n${PORTAL_URL}\n(plaque : ${v.plate})\n\nCordialement,\nDCAR ATELIER\nService a domicile`;
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const emailBody = `Bonjour ${prenom},\n\n${EMAIL_BODIES[v.status]}\n\nVehicule : ${v.model}\nPlaque : ${v.plate}\nStatut : ${STATUSES[v.status].label} (Etape ${v.status+1}/7)\n\nSuivez l'avancement :\n${PORTAL_URL}\n(plaque : ${v.plate})\n\nCordialement,\nDCAR ATELIER\nService a domicile`;
+    const response = await fetch('https://dcar-atelier-1.onrender.com/send-email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'api-key': BREVO_API_KEY,
-      },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        sender: { name: 'DCAR ATELIER', email: 'cliiclisaghiri@gmail.com' },
-        to: [{ email: v.email, name: v.client }],
+        to: v.email,
         subject: EMAIL_SUBJECTS[v.status](v),
-        textContent: emailBody,
+        message: emailBody,
+        from_name: 'DCAR ATELIER',
       })
     });
     const data = await response.json();
-    if(response.ok) {
+    if(data.success) {
       btn.innerHTML = '✅ Email envoyé !';
       btn.style.background = '#10b981';
       setTimeout(() => {
@@ -685,10 +680,10 @@ async function openMail() {
         closeModal('notifModal');
       }, 2000);
     } else {
-      throw new Error(data.message);
+      throw new Error(data.error);
     }
   } catch(err) {
-    console.error('Web3Forms error:', err);
+    console.error('Render error:', err);
     btn.innerHTML = '❌ Erreur envoi';
     btn.style.background = '#ef4444';
     setTimeout(() => {
