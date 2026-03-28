@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0a0c10; --surface:#12151c; --surface2:#1a1e28; --border:#252a38;
+  --bg:#131720; --surface:#1c2130; --surface2:#232a3a; --border:#252a38;
   --accent:#3b82f6; --accent2:#06b6d4; --gold:#f59e0b; --text:#f0f2f7;
   --muted:#6b7280; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
   --radius:12px;
@@ -219,8 +219,14 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
 <!-- ══════════ CLIENT VIEW ══════════ -->
 <div id="view-client" class="view active">
   <div class="client-hero">
+    <div style="margin-bottom:24px;">
+      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">
+        <span style="color:#3b82f6;">D</span><span style="color:#06b6d4;">CAR</span>
+        <span style="color:#f0f2f7;font-size:14px;font-weight:600;letter-spacing:3px;display:block;margin-top:-4px;">ATELIER</span>
+      </div>
+    </div>
     <div class="client-title">Où est<br><span>votre véhicule ?</span></div>
-    <p class="client-sub">Entrez votre plaque pour suivre l'avancement en temps réel</p>
+    <p class="client-sub">Bienvenue ! Entrez votre plaque d'immatriculation pour suivre l'avancement de votre réparation en temps réel</p>
     <div class="search-box">
       <div class="search-label">Numéro d'immatriculation</div>
       <div class="plate-input-wrap">
@@ -232,11 +238,39 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
       <button class="search-btn" onclick="searchVehicle()">Rechercher mon véhicule →</button>
     </div>
     <div id="searchResult" style="width:100%;max-width:680px;"></div>
+    <div style="margin-top:40px;padding:20px;text-align:center;border-top:1px solid var(--border);width:100%;max-width:520px;">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:6px;">Une question sur votre véhicule ?</p>
+      <p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;">📍 4 Rue Sadi Carnot, 93300 Aubervilliers</p>
+      <p style="font-size:14px;font-weight:500;color:var(--accent);">📞 01 44 02 34 60</p>
+      <p style="font-size:11px;color:var(--muted);margin-top:12px;">Portail propulsé par <span style="color:#06b6d4;">Suivi Solutions</span></p>
+    </div>
   </div>
 </div>
 
 <!-- ══════════ ADMIN VIEW ══════════ -->
 <div id="view-admin" class="view">
+
+<!-- PIN SCREEN -->
+<div id="pin-screen" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:340px;text-align:center;">
+    <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;">
+      <span style="color:#3b82f6;">D</span><span style="color:#06b6d4;">CAR</span>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:24px;">Accès administrateur</p>
+    <input type="password" id="pin-input" placeholder="••••" maxlength="10"
+      style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+      padding:14px;color:var(--text);font-size:22px;text-align:center;letter-spacing:6px;outline:none;
+      font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px;"
+      onkeydown="if(event.key==='Enter')checkPin()">
+    <button onclick="checkPin()" style="width:100%;background:linear-gradient(135deg,#3b82f6,#2563eb);
+      border:none;border-radius:10px;padding:14px;color:white;font-family:'DM Sans',sans-serif;
+      font-size:15px;font-weight:600;cursor:pointer;">Accéder →</button>
+    <p id="pin-error" style="color:#ef4444;font-size:13px;margin-top:10px;display:none;">Code incorrect. Réessayez.</p>
+  </div>
+</div>
+
+<!-- ADMIN CONTENT -->
+<div id="admin-content" style="display:none;">
   <div class="admin-wrap">
     <div class="admin-header">
       <div class="admin-title">📋 Tableau de bord</div>
@@ -377,12 +411,29 @@ let currentNotifVehicleId = null;
 const PORTAL_URL = 'https://younes-cloudiiii.github.io/DCAR-ATELIER';
 
 // ── VIEW SWITCH ──────────────────────────────────────────────────────────────
+function checkPin() {
+  const pin = document.getElementById('pin-input').value;
+  if(pin === '1981') {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    renderKanban();
+  } else {
+    document.getElementById('pin-error').style.display = 'block';
+    document.getElementById('pin-input').value = '';
+  }
+}
+
 function switchView(v, btn) {
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   btn.classList.add('active');
-  if(v==='admin') renderKanban();
+  if(v==='admin') {
+    document.getElementById('pin-screen').style.display = 'flex';
+    document.getElementById('admin-content').style.display = 'none';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-error').style.display = 'none';
+  }
 }
 
 // ── CLIENT SEARCH ─────────────────────────────────────────────────────────────
