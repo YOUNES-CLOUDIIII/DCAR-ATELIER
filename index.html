@@ -205,33 +205,22 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
 </head>
 <body>
 
-<nav id="main-nav">
-  <div class="logo">
-    <span><span class="d">D</span><span class="car">CAR</span></span>
-    <span class="atelier">ATELIER</span>
+<nav id="main-nav" style="justify-content:space-between;">
+  <div style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-0.5px;display:flex;align-items:center;gap:6px;">
+    <span style="font-size:24px;color:#f59e0b;">D</span><span style="font-size:24px;color:#f0f2f7;">CAR</span>
+    <span style="font-size:12px;color:#f0f2f7;font-weight:600;letter-spacing:3px;margin-left:2px;">ATELIER</span>
   </div>
-  <div class="nav-tabs" id="nav-tabs-admin">
-    <button class="nav-tab active" onclick="switchView('client',this)">🔍 Suivi véhicule</button>
-    <button class="nav-tab" onclick="switchView('admin',this)">⚙️ Admin</button>
-  </div>
-  <div id="nav-admin-btn" style="display:none;">
-    <button onclick="switchView('admin', document.querySelectorAll('.nav-tab')[1])" 
-      style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 16px;
-      color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
-      ⚙️
-    </button>
-  </div>
+  <button onclick="switchView('admin')" 
+    style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:7px 12px;
+    color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;opacity:0.4;">
+    ⚙️
+  </button>
 </nav>
 
 <!-- ══════════ CLIENT VIEW ══════════ -->
 <div id="view-client" class="view active">
   <div class="client-hero">
-    <div style="margin-bottom:40px;">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-0.5px;text-align:center;">
-        <span style="font-size:42px;color:#f59e0b;">D</span><span style="font-size:42px;color:#f0f2f7;">CAR</span>
-        <span style="font-size:18px;color:#f0f2f7;font-weight:600;letter-spacing:4px;margin-left:6px;">ATELIER</span>
-      </div>
-    </div>
+
     <div class="client-title">Où est<br><span>votre véhicule ?</span></div>
     <p class="client-sub">Bienvenue ! Entrez votre plaque d'immatriculation pour suivre l'avancement de votre réparation en temps réel</p>
     <div class="search-box">
@@ -430,21 +419,14 @@ function checkPin() {
   }
 }
 
-function switchView(v, btn) {
+function switchView(v) {
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  if(btn) btn.classList.add('active');
   if(v==='admin') {
-    document.getElementById('nav-tabs-admin').style.display = 'none';
-    document.getElementById('nav-admin-btn').style.display = 'flex';
     document.getElementById('pin-screen').style.display = 'flex';
     document.getElementById('admin-content').style.display = 'none';
     document.getElementById('pin-input').value = '';
     document.getElementById('pin-error').style.display = 'none';
-  } else {
-    document.getElementById('nav-tabs-admin').style.display = 'none';
-    document.getElementById('nav-admin-btn').style.display = 'flex';
   }
 }
 
