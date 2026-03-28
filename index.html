@@ -18,7 +18,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* NAV */
 nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:rgba(10,12,16,0.97);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-0.5px;}
-.logo .d{color:#3b82f6;} .logo .car{color:#06b6d4;} .logo .atelier{color:var(--gold);font-size:13px;font-weight:600;letter-spacing:2px;display:block;margin-top:-4px;}
+.logo .d{color:#f59e0b;} .logo .car{color:#f0f2f7;} .logo .atelier{color:#f0f2f7;font-size:13px;font-weight:600;letter-spacing:2px;display:block;margin-top:-4px;}
 .nav-tabs{display:flex;gap:4px;background:var(--surface);border-radius:10px;padding:4px;}
 .nav-tab{padding:8px 20px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;}
 .nav-tab.active{background:var(--accent);color:white;}
@@ -205,24 +205,31 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
 </head>
 <body>
 
-<nav>
+<nav id="main-nav">
   <div class="logo">
     <span><span class="d">D</span><span class="car">CAR</span></span>
     <span class="atelier">ATELIER</span>
   </div>
-  <div class="nav-tabs">
+  <div class="nav-tabs" id="nav-tabs-admin">
     <button class="nav-tab active" onclick="switchView('client',this)">🔍 Suivi véhicule</button>
     <button class="nav-tab" onclick="switchView('admin',this)">⚙️ Admin</button>
+  </div>
+  <div id="nav-admin-btn" style="display:none;">
+    <button onclick="switchView('admin', document.querySelectorAll('.nav-tab')[1])" 
+      style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 16px;
+      color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+      ⚙️
+    </button>
   </div>
 </nav>
 
 <!-- ══════════ CLIENT VIEW ══════════ -->
 <div id="view-client" class="view active">
   <div class="client-hero">
-    <div style="margin-bottom:24px;">
-      <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;">
-        <span style="color:#3b82f6;">D</span><span style="color:#06b6d4;">CAR</span>
-        <span style="color:#f0f2f7;font-size:14px;font-weight:600;letter-spacing:3px;display:block;margin-top:-4px;">ATELIER</span>
+    <div style="margin-bottom:40px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-0.5px;text-align:center;">
+        <span style="font-size:42px;color:#f59e0b;">D</span><span style="font-size:42px;color:#f0f2f7;">CAR</span>
+        <span style="font-size:18px;color:#f0f2f7;font-weight:600;letter-spacing:4px;margin-left:6px;">ATELIER</span>
       </div>
     </div>
     <div class="client-title">Où est<br><span>votre véhicule ?</span></div>
@@ -427,12 +434,17 @@ function switchView(v, btn) {
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   if(v==='admin') {
+    document.getElementById('nav-tabs-admin').style.display = 'none';
+    document.getElementById('nav-admin-btn').style.display = 'flex';
     document.getElementById('pin-screen').style.display = 'flex';
     document.getElementById('admin-content').style.display = 'none';
     document.getElementById('pin-input').value = '';
     document.getElementById('pin-error').style.display = 'none';
+  } else {
+    document.getElementById('nav-tabs-admin').style.display = 'none';
+    document.getElementById('nav-admin-btn').style.display = 'flex';
   }
 }
 
