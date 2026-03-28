@@ -1,6 +1,5 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
-const cors = require('cors');
+const { Resend } = require('resend');
 
 const app = express();
 
@@ -14,15 +13,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.post('/send-email', async (req, res) => {
   const { to, subject, message, from_name } = req.body;
@@ -30,8 +21,8 @@ app.post('/send-email', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Champs manquants' });
   }
   try {
-    await transporter.sendMail({
-      from: `"${from_name || 'DCAR ATELIER'}" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'DCAR ATELIER <onboarding@resend.dev>',
       to,
       subject,
       text: message,
