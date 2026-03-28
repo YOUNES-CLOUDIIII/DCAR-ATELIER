@@ -21,12 +21,13 @@ app.post('/send-email', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Champs manquants' });
   }
   try {
-    await resend.emails.send({
-      from: 'DCAR ATELIER <onboarding@resend.dev>',
-      to,
-      subject,
-      text: message,
-    });
+   const { data, error } = await resend.emails.send({
+  from: 'DCAR ATELIER <onboarding@resend.dev>',
+  to: [to],
+  subject,
+  text: message,
+});
+if (error) throw new Error(JSON.stringify(error));
     res.json({ success: true });
   } catch (err) {
     console.error(err);
