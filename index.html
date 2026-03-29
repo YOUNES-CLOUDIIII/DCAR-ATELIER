@@ -592,22 +592,28 @@ function openAddModal() {
   document.getElementById('f-status').value='0';
   document.getElementById('addModal').classList.add('open');
 }
-function addVehicle() {
+async function addVehicle() {
   const plate  = document.getElementById('f-plate').value.trim().toUpperCase();
   const model  = document.getElementById('f-model').value.trim();
   const client = document.getElementById('f-client').value.trim();
-  const phone  = '';
   const email  = document.getElementById('f-email').value.trim();
   const status = parseInt(document.getElementById('f-status').value);
   if(!plate||!model||!client){alert('Plaque, modèle et client sont obligatoires.');return;}
   const now = new Date();
   const addedAt = now.toLocaleDateString('fr-FR')+' '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const v = {id:nextId++, plate, model, client, phone, email, status, addedAt};
-  vehicles.push(v);
-  closeModal('addModal');
-  renderKanban();
-  // Ouvrir directement les notifications
-  openNotifModal(v.id, 'wa', true);
+  const vehicleData = {plate, model, client, phone:'', email, status, addedAt};
+  try {
+    const docRef = await window.fbAddDoc(window.fbCollection(window.db, 'vehicles'), vehicleData);
+    const v = {id: docRef.id, ...vehicleData};
+    if(!window.vehicles) window.vehicles = [];
+    window.vehicles.push(v);
+    closeModal('addModal');
+    renderKanban();
+    openNotifModal(docRef.id, true);
+  } catch(e) {
+    console.error('Add error:', e);
+    alert('Erreur lors de l'ajout. Réessayez.');
+  }
 }
 
 // ── STATUS CHANGE ─────────────────────────────────────────────────────────────
