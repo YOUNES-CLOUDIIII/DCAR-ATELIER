@@ -202,6 +202,39 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 3
   .progress-track{display:none;}
 }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAL-8CwigOObuF5WiAAdxJIrF64GAq3Ea0",
+  authDomain: "dcar-atelier.firebaseapp.com",
+  projectId: "dcar-atelier",
+  storageBucket: "dcar-atelier.firebasestorage.app",
+  messagingSenderId: "744333902555",
+  appId: "1:744333902555:web:877e4560e1d587ab2a82fe"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+window.db = db;
+window.fbFirebaseReady = true;
+
+// Expose Firebase methods globally
+window.fbAddDoc = (col, data) => col.add(data);
+window.fbCollection = (db, name) => db.collection(name);
+window.fbDoc = (db, name, id) => db.collection(name).doc(id);
+window.fbUpdateDoc = (ref, data) => ref.update(data);
+window.fbDeleteDoc = (ref) => ref.delete();
+window.fbGetDocs = (col) => col.get();
+
+// Real-time listener - loads vehicles automatically
+db.collection('vehicles').onSnapshot((snapshot) => {
+  window.vehicles = [];
+  snapshot.forEach(d => {
+    window.vehicles.push({ id: d.id, ...d.data() });
+  });
+  if(typeof renderKanban === 'function') renderKanban();
+});
+</script>
 </head>
 <body>
 
@@ -553,11 +586,11 @@ function clearAdminSearch() {
 async function deleteVehicle(id) {
   if(!confirm('Supprimer ce vehicule du tableau de bord ?')) return;
   try {
-    await window.fbDeleteDoc(window.fbDoc(window.db, 'vehicles', id));
+    await window.db.collection('vehicles').doc(id).delete();
     clearAdminSearch();
   } catch(e) {
     console.error('Delete error:', e);
-    alert('Erreur lors de la suppression.');
+    alert('Erreur suppression: ' + e.message);
   }
 }
 
@@ -598,12 +631,12 @@ async function addVehicle() {
   const client = document.getElementById('f-client').value.trim();
   const email  = document.getElementById('f-email').value.trim();
   const status = parseInt(document.getElementById('f-status').value);
-  if(!plate||!model||!client){alert('Plaque, modèle et client sont obligatoires.');return;}
+  if(!plate||!model||!client){alert('Plaque, modele et client sont obligatoires.');return;}
   const now = new Date();
   const addedAt = now.toLocaleDateString('fr-FR')+' '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const vehicleData = {plate, model, client, phone:'', email, status, addedAt};
   try {
-    const docRef = await window.fbAddDoc(window.fbCollection(window.db, 'vehicles'), vehicleData);
+    const docRef = await window.db.collection('vehicles').add(vehicleData);
     const v = {id: docRef.id, ...vehicleData};
     if(!window.vehicles) window.vehicles = [];
     window.vehicles.push(v);
@@ -612,7 +645,7 @@ async function addVehicle() {
     openNotifModal(docRef.id, true);
   } catch(e) {
     console.error('Add error:', e);
-    alert('Erreur lors de l'ajout. Réessayez.');
+    alert('Erreur ajout: ' + e.message);
   }
 }
 
