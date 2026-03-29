@@ -445,6 +445,7 @@ const STATUSES = [
 let vehicles = [];
 window.vehicles = [];
 let nextId = 1;
+window._vmap = {}; // map numeric key -> firebase id
 let editingId = null;
 let currentNotifVehicleId = null;
 const PORTAL_URL = 'https://younes-cloudiiii.github.io/DCAR-ATELIER';
@@ -557,6 +558,7 @@ function adminSearch() {
   }
   const s = STATUSES[v.status];
   el.style.display='block';
+  window._lastSearchId = v.id;
   el.innerHTML=`
     <div class="sra-top">
       <div class="sra-info">
@@ -570,9 +572,9 @@ function adminSearch() {
       <div class="sra-current ${s.cls} ${s.cls}b">${s.emoji} ${s.label}</div>
     </div>
     <div class="sra-actions">
-      <button class="sra-btn" onclick="openStatusModal(${v.id});"><strong>Changer le statut</strong></button>
-      <button class="sra-btn mail" onclick="openNotifModal(${v.id})">📧 Envoyer email</button>
-      <button class="sra-btn danger" onclick="deleteVehicle(${v.id})">Supprimer</button>
+      <button class="sra-btn" onclick="openStatusModal(window._lastSearchId)"><strong>Changer le statut</strong></button>
+      <button class="sra-btn mail" onclick="openNotifModal(window._lastSearchId)">📧 Envoyer email</button>
+      <button class="sra-btn danger" onclick="deleteVehicle(window._lastSearchId)">Supprimer</button>
     </div>`;
 }
 
@@ -599,16 +601,18 @@ function renderKanban() {
   const allVehicles = window.vehicles || vehicles;
   kb.innerHTML = STATUSES.map((s,si)=>{
     const cars = allVehicles.filter(v=>v.status===si);
-    const cards = cars.map(v=>`
-      <div class="vcard">
+    const cards = cars.map((v,vi)=>{
+      const safeKey = 'k'+Date.now()+vi+Math.random().toString(36).slice(2,6);
+      window._vmap[safeKey] = v.id;
+      return `<div class="vcard">
         <div class="vcard-plate">${v.plate}</div>
         <div class="vcard-model">${v.model}</div>
         <div class="vcard-client">👤 ${v.client}</div>
         <div class="vcard-actions">
-          <button class="vcard-btn" onclick="openStatusModal(${v.id})">Statut</button>
-          <button class="vcard-btn mail" onclick="openNotifModal(${v.id})">📧 Email</button>
+          <button class="vcard-btn" onclick="openStatusModal(window._vmap['${safeKey}'])">Statut</button>
+          <button class="vcard-btn mail" onclick="openNotifModal(window._vmap['${safeKey}'])">📧 Email</button>
         </div>
-      </div>`).join('');
+      </div>`;}).join('');
     return `<div class="column">
       <div class="col-header">
         <span><span class="col-dot ${s.dot}"></span><span class="col-name ${s.cls}">${s.emoji} ${s.label}</span></span>
@@ -652,7 +656,7 @@ async function addVehicle() {
 // ── STATUS CHANGE ─────────────────────────────────────────────────────────────
 function openStatusModal(id) {
   editingId=id;
-  const v=vehicles.find(x=>x.id===id);
+  const v=(window.vehicles||vehicles).find(x=>x.id===id||x.id==id);
   document.getElementById('statusModalTitle').textContent=`Statut — ${v.plate}`;
   document.getElementById('s-status').value=v.status;
   document.getElementById('statusModal').classList.add('open');
