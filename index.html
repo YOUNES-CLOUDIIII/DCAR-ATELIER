@@ -409,14 +409,9 @@ const STATUSES = [
   { label:'Restitution prog.',   emoji:'📅', desc:'Votre véhicule est prêt, restitution planifiée.',    cls:'s6', dot:'dot6', short:'Restitution' },
 ];
 
-let vehicles = [
-  { id:1, plate:'AB-123-CD', model:'Renault Clio IV',  client:'Jean Dupont',     phone:'0612345678', email:'jean@exemple.fr',   status:2, addedAt:'13/01/2025 09:00' },
-  { id:2, plate:'EF-456-GH', model:'Peugeot 308 SW',   client:'Marie Martin',    phone:'0698765432', email:'marie@exemple.fr',  status:4, addedAt:'15/01/2025 11:00' },
-  { id:3, plate:'IJ-789-KL', model:'Citroën C3',       client:'Paul Bernard',    phone:'0623456789', email:'paul@exemple.fr',   status:6, addedAt:'10/01/2025 10:00' },
-  { id:4, plate:'MN-012-OP', model:'VW Golf VII',      client:'Sophie Lefebvre', phone:'0634567890', email:'sophie@exemple.fr', status:0, addedAt:'20/01/2025 14:00' },
-  { id:5, plate:'QR-345-ST', model:'BMW Série 3',      client:'Lucas Moreau',    phone:'0645678901', email:'lucas@exemple.fr',  status:1, addedAt:'17/01/2025 12:00' },
-];
-let nextId = 6;
+let vehicles = [];
+window.vehicles = [];
+let nextId = 1;
 let editingId = null;
 let currentNotifVehicleId = null;
 const PORTAL_URL = 'https://younes-cloudiiii.github.io/DCAR-ATELIER';
@@ -450,7 +445,7 @@ function searchVehicle() {
   const q = document.getElementById('plateSearch').value.trim().toUpperCase().replace(/[\s-]/g,'');
   const el = document.getElementById('searchResult');
   if(!q){el.innerHTML='';return;}
-  const v = vehicles.find(x=>x.plate.replace(/-/g,'')===q);
+  const v = (window.vehicles||vehicles).find(x=>x.plate.replace(/-/g,'')===q);
   if(!v){
     el.innerHTML=`<div class="not-found"><div class="nf-icon">🔍</div><p>Aucun véhicule trouvé pour <strong>${q}</strong>.<br>Vérifiez votre plaque ou contactez-nous.</p></div>`;
     return;
@@ -521,7 +516,7 @@ function adminSearch() {
   const q = document.getElementById('adminSearchInput').value.trim().toUpperCase().replace(/[\s-]/g,'');
   const el = document.getElementById('searchResultAdmin');
   if(!q){el.style.display='none';el.innerHTML='';return;}
-  const v = vehicles.find(x=>x.plate.replace(/-/g,'')===q);
+  const v = (window.vehicles||vehicles).find(x=>x.plate.replace(/-/g,'')===q);
   if(!v){
     el.style.display='block';
     el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:10px;">Aucun vehicule trouve pour <strong style="color:var(--text)">${q}</strong></div>`;
@@ -555,17 +550,22 @@ function clearAdminSearch() {
   el.innerHTML='';
 }
 
-function deleteVehicle(id) {
+async function deleteVehicle(id) {
   if(!confirm('Supprimer ce vehicule du tableau de bord ?')) return;
-  vehicles = vehicles.filter(x=>x.id!==id);
-  clearAdminSearch();
-  renderKanban();
+  try {
+    await window.fbDeleteDoc(window.fbDoc(window.db, 'vehicles', id));
+    clearAdminSearch();
+  } catch(e) {
+    console.error('Delete error:', e);
+    alert('Erreur lors de la suppression.');
+  }
 }
 
 function renderKanban() {
   const kb = document.getElementById('kanban');
+  const allVehicles = window.vehicles || vehicles;
   kb.innerHTML = STATUSES.map((s,si)=>{
-    const cars = vehicles.filter(v=>v.status===si);
+    const cars = allVehicles.filter(v=>v.status===si);
     const cards = cars.map(v=>`
       <div class="vcard">
         <div class="vcard-plate">${v.plate}</div>
@@ -676,7 +676,7 @@ function buildEmailText(v) {
 
 function openNotifModal(id, isNew=false) {
   currentNotifVehicleId = id;
-  const v = vehicles.find(x=>x.id===id);
+  const v = (window.vehicles||vehicles).find(x=>x.id===id);
   const s = STATUSES[v.status];
   document.getElementById('notifTitle').textContent = `Email - ${v.plate}`;
   document.getElementById('notifBanner').innerHTML =
@@ -691,7 +691,7 @@ function openNotifModal(id, isNew=false) {
 
 function openNotifModal(id, isNew=false) {
   currentNotifVehicleId = id;
-  const v = vehicles.find(x=>x.id===id);
+  const v = (window.vehicles||vehicles).find(x=>x.id===id);
   const s = STATUSES[v.status];
   document.getElementById('notifTitle').textContent = `📨 Notifier — ${v.plate}`;
   document.getElementById('notifBanner').innerHTML =
@@ -710,7 +710,7 @@ function switchNotifTab(tab, btn) {
 }
 
 async function openMail() {
-  const v = vehicles.find(x=>x.id===currentNotifVehicleId);
+  const v = (window.vehicles||vehicles).find(x=>x.id===currentNotifVehicleId);
   if(!v.email){alert('Aucun email renseigné pour ce client.');return;}
   const btn = document.querySelector('.action-btn.btn-mail');
   const orig = btn.innerHTML;
