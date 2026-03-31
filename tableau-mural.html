@@ -249,11 +249,68 @@
     if (e.key === 'Enter') window.checkPin();
   });
 
+  const INITIAL_DATA = [
+    {plate:'BN-985-GE',col:'passage'},{plate:'CP-693-SU',col:'passage'},
+    {plate:'GT-008-GV',col:'passage'},{plate:'DD-467-BL',col:'passage'},
+    {plate:'FL-100-LH',col:'passage'},{plate:'GT-657-IF',col:'passage'},
+    {plate:'CT-278-WW',col:'passage'},{plate:'BX-804-PG',col:'passage'},
+    {plate:'HE-353-AA',col:'passage'},{plate:'CN-269-KJ',col:'passage'},
+    {plate:'FK-049-M', col:'passage'},{plate:'SV-842-YS',col:'passage'},
+    {plate:'BN-985-JE',col:'rapport'},{plate:'K-256-YN', col:'rapport'},
+    {plate:'GD-113-ET',col:'rapport'},{plate:'DW-561-LD',col:'rapport'},
+    {plate:'DR-088-CE',col:'rapport'},{plate:'EA-569-FB',col:'rapport'},
+    {plate:'GY-079-NL',col:'rapport'},{plate:'EK-325-MI',col:'rapport'},
+    {plate:'GR-662-GB',col:'rdv'},{plate:'GG-967-DC',col:'rdv'},
+    {plate:'AT-128-GB',col:'rdv'},{plate:'GW-627-YS',col:'rdv'},
+    {plate:'DR-545-DK',col:'rdv'},{plate:'EF-334-QR',col:'rdv'},
+    {plate:'EA-369-BR',col:'rdv'},
+    {plate:'GY-326-EG',col:'attente'},{plate:'GJ-471-WW',col:'attente'},
+    {plate:'CH-034-DI',col:'attente'},{plate:'BD-135-LL',col:'attente'},
+    {plate:'BA-361-GE',col:'attente'},{plate:'DA-823-PP',col:'attente'},
+    {plate:'AR-366-XL',col:'attente'},{plate:'GN-642-HZ',col:'attente'},
+    {plate:'FT-589-RL',col:'attente'},{plate:'TW-239-GG',col:'attente'},
+    {plate:'FR-368-NE',col:'attente'},
+    {plate:'GR-886-MZ',col:'pieces'},{plate:'H9-400-TD',col:'pieces'},
+    {plate:'FA-306-XL',col:'pieces'},{plate:'AL-482-HJ',col:'pieces'},
+    {plate:'DD-142-HT',col:'pieces'},{plate:'AM-398-B', col:'pieces'},
+    {plate:'GP-460-FK',col:'khalid'},{plate:'CM-903-WF',col:'khalid'},
+    {plate:'FV-444-CA',col:'khalid'},
+    {plate:'GW-483-NL',col:'mehdi'},
+    {plate:'FZ-672-M', col:'chouaib'},{plate:'FY-202-F', col:'chouaib'},
+    {plate:'FY-636-AL',col:'chouaib'},
+    {plate:'GP-754-W1',col:'abdec'},
+    {plate:'GY-736-VS',col:'livraison'},{plate:'DS-861-DC',col:'livraison'},
+    {plate:'EA-266-WW',col:'livraison'},{plate:'ET-261-CF',col:'livraison'},
+    {plate:'ED-153-SN',col:'livraison'},{plate:'BC-466-LJ',col:'livraison'},
+    {plate:'GM-152-VK',col:'livraison'},{plate:'FF-697-LD',col:'livraison'},
+    {plate:'DT-219-JP',col:'livraison'},{plate:'DH-329-MK',col:'livraison'},
+    {plate:'EV-469-AX',col:'livraison'},{plate:'EV-591-BC',col:'livraison'},
+    {plate:'CW-332-PA',col:'livraison'},{plate:'HF-793-TJ',col:'livraison'},
+    {plate:'DC-789-Q', col:'livraison'},{plate:'HA-214-EI',col:'livraison'},
+    {plate:'GR-880-TYI',col:'livraison'},{plate:'DJ-812-EW',col:'livraison'},
+    {plate:'GA-994-SV',col:'peinture'},{plate:'GE-757-NG',col:'peinture'},
+    {plate:'DV-263-KJ',col:'peinture'},{plate:'GG-620-AR',col:'peinture'},
+    {plate:'FE-796-JC',col:'peinture'},{plate:'CC-277-K', col:'peinture'},
+    {plate:'ET-215-DG',col:'peinture'},
+  ];
+
+  async function importIfEmpty() {
+    const snap2 = await (await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')).getDocs(COL_REF);
+    if (snap2.empty) {
+      const today = new Date().toISOString().slice(0,10);
+      for (const item of INITIAL_DATA) {
+        await addDoc(COL_REF, {...item, model:'', note:'', date:today, createdAt:serverTimestamp()});
+      }
+    }
+  }
+
   function startListen() {
-    onSnapshot(COL_REF, snap => {
-      cards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      render();
-      document.getElementById('loader').classList.remove('visible');
+    importIfEmpty().then(() => {
+      onSnapshot(COL_REF, snap => {
+        cards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        render();
+        document.getElementById('loader').classList.remove('visible');
+      });
     });
   }
 
