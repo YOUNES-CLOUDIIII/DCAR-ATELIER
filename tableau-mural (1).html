@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tableau Atelier – DCAR</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f4; color: #1a1a1a; min-height: 100vh; }
+
+  /* PIN */
+  #pin-screen {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; gap: 14px;
+  }
+  #pin-screen h1 { font-size: 22px; font-weight: 600; letter-spacing: 1px; }
+  #pin-screen p { font-size: 14px; color: #666; }
+  #pin-input {
+    width: 140px; text-align: center; font-size: 28px; letter-spacing: 12px;
+    padding: 10px 14px; border: 1.5px solid #ccc; border-radius: 10px;
+    background: #fff; outline: none;
+  }
+  #pin-input:focus { border-color: #1a1a1a; }
+  #pin-error { font-size: 13px; color: #c0392b; display: none; }
+  .btn {
+    padding: 9px 22px; border-radius: 8px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 500;
+  }
+  .btn-dark { background: #1a1a1a; color: #fff; }
+  .btn-dark:hover { background: #333; }
+  .btn-light { background: #fff; color: #1a1a1a; border: 1px solid #ccc; }
+  .btn-light:hover { background: #f0f0f0; }
+
+  /* APP */
+  #app { display: none; padding: 14px 12px; }
+
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .top-bar h1 { font-size: 18px; font-weight: 600; }
+  .top-bar .right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .search-input {
+    padding: 7px 12px; border-radius: 8px; border: 1px solid #ccc;
+    font-size: 13px; background: #fff; width: 160px; outline: none;
+  }
+  .search-input:focus { border-color: #1a1a1a; }
+
+  /* BOARD */
+  .board {
+    display: flex; gap: 10px; overflow-x: auto; align-items: flex-start;
+    padding-bottom: 12px;
+  }
+  .col {
+    flex: 0 0 155px; min-width: 155px;
+    background: #eaeaea; border-radius: 12px;
+    padding: 10px 8px; min-height: 120px;
+  }
+  .col.drop-target { background: #dbeafe; outline: 2px dashed #3b82f6; }
+
+  .col-header {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #555;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid #d0d0d0;
+  }
+  .col-count {
+    background: #fff; border-radius: 20px; padding: 1px 7px;
+    font-size: 11px; color: #888; font-weight: 400;
+  }
+
+  .cards-area { min-height: 40px; }
+
+  .card {
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+    padding: 8px 10px; margin-bottom: 6px;
+    cursor: grab; user-select: none; position: relative;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.10); border-color: #bbb; }
+  .card.dragging { opacity: 0.35; }
+  .card.highlighted { border-color: #e74c3c; box-shadow: 0 0 0 2px #e74c3c44; }
+
+  .card-plate {
+    font-size: 14px; font-weight: 700; letter-spacing: 0.06em;
+    font-family: 'Courier New', monospace; color: #1a1a1a;
+  }
+  .card-model { font-size: 11px; color: #666; margin-top: 3px; }
+  .card-date { font-size: 10px; color: #aaa; margin-top: 4px; }
+  .card-actions {
+    display: none; position: absolute; top: 6px; right: 6px; gap: 4px;
+  }
+  .card:hover .card-actions { display: flex; }
+  .card-btn {
+    font-size: 11px; padding: 2px 6px; border-radius: 5px; border: 1px solid #ddd;
+    background: #f9f9f9; cursor: pointer; color: #555;
+  }
+  .card-btn:hover { background: #eee; }
+  .card-btn.del { color: #c0392b; border-color: #e0b0b0; }
+  .card-btn.del:hover { background: #fdecea; }
+
+  .add-col-btn {
+    width: 100%; font-size: 12px; padding: 6px;
+    border: 1px dashed #bbb; border-radius: 7px;
+    background: transparent; color: #999; cursor: pointer; margin-top: 4px;
+  }
+  .add-col-btn:hover { background: #fff; color: #555; }
+
+  /* MODAL */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px;
+    padding: 22px; width: 320px; max-width: 95vw;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .modal label { font-size: 12px; color: #666; display: block; margin-bottom: 4px; }
+  .modal input, .modal select {
+    width: 100%; font-size: 13px; margin-bottom: 12px;
+    border: 1px solid #ccc; border-radius: 8px;
+    background: #fff; color: #1a1a1a; padding: 8px 10px; outline: none;
+  }
+  .modal input:focus, .modal select:focus { border-color: #1a1a1a; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; color: #fff; padding: 10px 20px;
+    border-radius: 8px; font-size: 13px; opacity: 0;
+    transition: opacity 0.3s; pointer-events: none; z-index: 999;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Loader */
+  #loader {
+    position: fixed; inset: 0; background: rgba(255,255,255,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; font-size: 14px; color: #555;
+  }
+  #loader.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <h1>DCAR ATELIER</h1>
+  <p>Tableau de suivi – Accès admin</p>
+  <input type="password" id="pin-input" maxlength="4" placeholder="····" />
+  <p id="pin-error">Code incorrect, réessayez.</p>
+  <button class="btn btn-dark" onclick="checkPin()">Entrer</button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="top-bar">
+    <h1>Tableau Atelier</h1>
+    <div class="right">
+      <input type="text" class="search-input" id="search-input" placeholder="Rechercher plaque…" oninput="searchPlate()" />
+      <button class="btn btn-dark" onclick="openAddModal(null)">+ Véhicule</button>
+    </div>
+  </div>
+  <div class="board" id="board"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">Ajouter un véhicule</h2>
+    <label>Plaque d'immatriculation</label>
+    <input type="text" id="f-plate" placeholder="AB-123-CD" />
+    <label>Modèle</label>
+    <input type="text" id="f-model" placeholder="Renault Clio" />
+    <label>Colonne</label>
+    <select id="f-col"></select>
+    <label>Date d'entrée</label>
+    <input type="date" id="f-date" />
+    <label>Note (optionnel)</label>
+    <input type="text" id="f-note" placeholder="ex: attendre pièce pare-choc" />
+    <div class="modal-actions">
+      <button class="btn btn-light" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-dark" onclick="saveCard()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="loader">Chargement…</div>
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getFirestore, collection, onSnapshot,
+    addDoc, updateDoc, deleteDoc, doc, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAL-8CwigOObuF5WiAAdxJIrF64GAq3Ea0",
+    authDomain: "dcar-atelier.firebaseapp.com",
+    projectId: "dcar-atelier",
+    storageBucket: "dcar-atelier.firebasestorage.app",
+    messagingSenderId: "744333902555",
+    appId: "1:744333902555:web:877e4560e1d587ab2a82fe"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const COL_REF = collection(db, 'tableau_mural');
+
+  const COLUMNS = [
+    { id: 'passage',   label: 'Passage terrain' },
+    { id: 'rapport',   label: 'Attente de rapport' },
+    { id: 'rdv',       label: 'RDV réparation à fixer' },
+    { id: 'attente',   label: 'Attente atelier' },
+    { id: 'pieces',    label: 'Pièce à commander' },
+    { id: 'khalid',    label: 'Khalid' },
+    { id: 'mehdi',     label: 'Mehdi' },
+    { id: 'chouaib',   label: 'Chouaib' },
+    { id: 'abdec',     label: 'Abdec Nour' },
+    { id: 'livraison', label: 'Cmd attente livraison' },
+    { id: 'peinture',  label: 'En attente peinture' },
+  ];
+
+  let cards = [];
+  let dragCard = null;
+  let editId = null;
+
+  // PIN
+  window.checkPin = () => {
+    const v = document.getElementById('pin-input').value;
+    if (v === '1981') {
+      document.getElementById('pin-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      startListen();
+    } else {
+      document.getElementById('pin-error').style.display = 'block';
+    }
+  };
+  document.getElementById('pin-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.checkPin();
+  });
+
+  function startListen() {
+    onSnapshot(COL_REF, snap => {
+      cards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      render();
+      document.getElementById('loader').classList.add('hidden');
+    });
+  }
+
+  function render() {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    const sel = document.getElementById('f-col');
+    sel.innerHTML = COLUMNS.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+
+    COLUMNS.forEach(col => {
+      const colCards = cards.filter(c => c.col === col.id);
+      const div = document.createElement('div');
+      div.className = 'col';
+      div.dataset.col = col.id;
+      div.innerHTML = `
+        <div class="col-header">
+          <span>${col.label}</span>
+          <span class="col-count">${colCards.length}</span>
+        </div>
+        <div class="cards-area" id="area-${col.id}"></div>
+        <button class="add-col-btn" data-col="${col.id}">+ ajouter</button>
+      `;
+
+      div.querySelector('.add-col-btn').addEventListener('click', () => openAddModal(col.id));
+
+      div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drop-target'); });
+      div.addEventListener('dragleave', () => div.classList.remove('drop-target'));
+      div.addEventListener('drop', async e => {
+        e.preventDefault(); div.classList.remove('drop-target');
+        if (dragCard && dragCard.col !== col.id) {
+          await updateDoc(doc(db, 'tableau_mural', dragCard.id), { col: col.id });
+          toast('Véhicule déplacé');
+        }
+        dragCard = null;
+      });
+
+      board.appendChild(div);
+
+      const area = document.getElementById('area-' + col.id);
+      colCards.forEach(card => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.draggable = true;
+        el.innerHTML = `
+          <div class="card-actions">
+            <button class="card-btn" onclick="openEditModal('${card.id}')">✏️</button>
+            <button class="card-btn del" onclick="deleteCard('${card.id}')">✕</button>
+          </div>
+          <div class="card-plate">${card.plate}</div>
+          ${card.model ? `<div class="card-model">${card.model}</div>` : ''}
+          ${card.note ? `<div class="card-model" style="color:#888;font-style:italic">${card.note}</div>` : ''}
+          ${card.date ? `<div class="card-date">${card.date}</div>` : ''}
+        `;
+        el.addEventListener('dragstart', () => { dragCard = card; el.classList.add('dragging'); });
+        el.addEventListener('dragend', () => { dragCard = null; el.classList.remove('dragging'); });
+        area.appendChild(el);
+      });
+    });
+    searchPlate();
+  }
+
+  window.openAddModal = (colId) => {
+    editId = null;
+    document.getElementById('modal-title').textContent = 'Ajouter un véhicule';
+    document.getElementById('f-plate').value = '';
+    document.getElementById('f-model').value = '';
+    document.getElementById('f-note').value = '';
+    document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+    if (colId) document.getElementById('f-col').value = colId;
+    document.getElementById('modal').classList.add('open');
+    setTimeout(() => document.getElementById('f-plate').focus(), 100);
+  };
+
+  window.openEditModal = (id) => {
+    const card = cards.find(c => c.id === id);
+    if (!card) return;
+    editId = id;
+    document.getElementById('modal-title').textContent = 'Modifier le véhicule';
+    document.getElementById('f-plate').value = card.plate;
+    document.getElementById('f-model').value = card.model || '';
+    document.getElementById('f-note').value = card.note || '';
+    document.getElementById('f-col').value = card.col;
+    document.getElementById('f-date').value = card.date || '';
+    document.getElementById('modal').classList.add('open');
+  };
+
+  window.closeModal = () => document.getElementById('modal').classList.remove('open');
+
+  window.saveCard = async () => {
+    const plate = document.getElementById('f-plate').value.trim().toUpperCase();
+    if (!plate) { alert('La plaque est obligatoire'); return; }
+    const data = {
+      plate,
+      col: document.getElementById('f-col').value,
+      model: document.getElementById('f-model').value.trim(),
+      note: document.getElementById('f-note').value.trim(),
+      date: document.getElementById('f-date').value,
+      updatedAt: serverTimestamp()
+    };
+    if (editId) {
+      await updateDoc(doc(db, 'tableau_mural', editId), data);
+      toast('Véhicule mis à jour');
+    } else {
+      data.createdAt = serverTimestamp();
+      await addDoc(COL_REF, data);
+      toast('Véhicule ajouté');
+    }
+    window.closeModal();
+  };
+
+  window.deleteCard = async (id) => {
+    if (!confirm('Supprimer ce véhicule ?')) return;
+    await deleteDoc(doc(db, 'tableau_mural', id));
+    toast('Véhicule supprimé');
+  };
+
+  window.searchPlate = () => {
+    const q = document.getElementById('search-input').value.trim().toUpperCase();
+    document.querySelectorAll('.card').forEach(el => {
+      const p = el.querySelector('.card-plate')?.textContent || '';
+      el.classList.toggle('highlighted', q.length > 1 && p.includes(q));
+    });
+  };
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
