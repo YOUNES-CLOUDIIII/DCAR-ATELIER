@@ -45,6 +45,23 @@
     font-size: 13px; background: #fff; width: 160px; outline: none;
   }
   .search-input:focus { border-color: #1a1a1a; }
+  .search-btn {
+    padding: 7px 14px; border-radius: 8px; border: 1px solid #1a1a1a;
+    background: #1a1a1a; color: #fff; font-size: 18px; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .search-btn:hover { background: #333; }
+  .search-wrap { display: flex; gap: 6px; align-items: center; }
+  @media (max-width: 600px) {
+    .search-input { width: 130px; font-size: 14px; }
+    .top-bar { gap: 6px; }
+    .top-bar h1 { font-size: 15px; }
+  }
+  /* Résultat info */
+  #search-info {
+    font-size: 12px; color: #888; margin-bottom: 8px;
+    padding: 0 4px; min-height: 18px;
+  }
 
   /* BOARD */
   .board {
@@ -176,10 +193,14 @@
   <div class="top-bar">
     <h1>Tableau Atelier</h1>
     <div class="right">
-      <input type="text" class="search-input" id="search-input" placeholder="Rechercher plaque…" oninput="searchPlate()" />
+      <div class="search-wrap">
+        <input type="text" class="search-input" id="search-input" placeholder="Plaque…" oninput="searchPlate()" onkeydown="if(event.key==='Enter'){searchPlate();this.blur();}" />
+        <button class="search-btn" onclick="searchPlate(); document.getElementById('search-input').blur();">🔍</button>
+      </div>
       <button class="btn btn-dark" onclick="openAddModal(null)">+ Véhicule</button>
     </div>
   </div>
+  <div id="search-info"></div>
   <div class="board" id="board"></div>
 </div>
 
@@ -444,13 +465,24 @@
     const q = document.getElementById('search-input').value.trim().toUpperCase();
     let found = null;
     let foundCol = null;
+    let count = 0;
     document.querySelectorAll('.col').forEach(col => col.classList.remove('col-pulse'));
     document.querySelectorAll('.card').forEach(el => {
       const p = el.querySelector('.card-plate')?.textContent || '';
       const match = q.length > 1 && p.includes(q);
       el.classList.toggle('highlighted', match);
-      if (match) { found = el; foundCol = el.closest('.col'); }
+      if (match) { found = el; foundCol = el.closest('.col'); count++; }
     });
+    const info = document.getElementById('search-info');
+    if (q.length > 1) {
+      if (count === 0) info.textContent = '❌ Plaque introuvable';
+      else {
+        const colLabel = foundCol ? foundCol.querySelector('.col-header span')?.textContent : '';
+        info.textContent = count === 1
+          ? '✅ Trouvé dans : ' + colLabel
+          : count + ' résultats trouvés';
+      }
+    } else { info.textContent = ''; }
     if (found) {
       found.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
       if (foundCol) {
