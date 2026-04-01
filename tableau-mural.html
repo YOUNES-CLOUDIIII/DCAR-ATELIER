@@ -80,7 +80,20 @@
   }
   .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.10); border-color: #bbb; }
   .card.dragging { opacity: 0.35; }
-  .card.highlighted { border-color: #e74c3c; box-shadow: 0 0 0 2px #e74c3c44; }
+  .card.highlighted {
+    background: #fff176 !important;
+    border-color: #f9a825 !important;
+    box-shadow: 0 0 0 3px #f9a82599 !important;
+    transform: scale(1.04);
+    z-index: 10;
+    position: relative;
+  }
+  .card.highlighted .card-plate { color: #e65100 !important; }
+  @keyframes col-pulse {
+    0%,100% { background: #eaeaea; }
+    50% { background: #fff9c4; }
+  }
+  .col.col-pulse { animation: col-pulse 0.6s ease 3; }
 
   .card-plate {
     font-size: 14px; font-weight: 700; letter-spacing: 0.06em;
@@ -429,10 +442,23 @@
 
   window.searchPlate = () => {
     const q = document.getElementById('search-input').value.trim().toUpperCase();
+    let found = null;
+    let foundCol = null;
+    document.querySelectorAll('.col').forEach(col => col.classList.remove('col-pulse'));
     document.querySelectorAll('.card').forEach(el => {
       const p = el.querySelector('.card-plate')?.textContent || '';
-      el.classList.toggle('highlighted', q.length > 1 && p.includes(q));
+      const match = q.length > 1 && p.includes(q);
+      el.classList.toggle('highlighted', match);
+      if (match) { found = el; foundCol = el.closest('.col'); }
     });
+    if (found) {
+      found.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      if (foundCol) {
+        foundCol.classList.remove('col-pulse');
+        void foundCol.offsetWidth;
+        foundCol.classList.add('col-pulse');
+      }
+    }
   };
 
   function toast(msg) {
